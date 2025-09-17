@@ -87,7 +87,7 @@ def formatar_registro_A0(id_mov, datahora, nseq):
     )
 
 def formatar_registro_L0(row, nseq):
-    return f"L0{f"{row['data_transacao']}"}{MOEDA}{str(nseq).zfill(6)}"
+    return f"L0{row['data_transacao']}{MOEDA}{str(nseq).zfill(6)}"
 
 def formatar_registro_CV(row, nseq):
     return (
