@@ -4,8 +4,9 @@ services:
   conciliacao-api:
     build: .
     container_name: conciliacao-api
-    ports:
-      - "5000:5000"
+    # Porta não exposta externamente - comunicação apenas via rede Docker
+    expose:
+      - "5000"
     environment:
       # Configurações do Banco de Dados
       - DB_SERVER=138.0.160.201

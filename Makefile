@@ -8,6 +8,12 @@ DOCKER = docker
 APP_NAME = conciliacao-api
 IMAGE_NAME = conciliacao-api
 
+# Variáveis Docker Hub (podem ser sobrescritas via environment)
+DOCKER_USER ?= seu-usuario
+DOCKER_IMAGE ?= $(DOCKER_USER)/$(IMAGE_NAME)
+DOCKER_TAG ?= latest
+VERSION ?= $(shell date +%Y%m%d-%H%M%S)
+
 help: ## Mostra esta mensagem de ajuda
 	@echo "Comandos disponíveis:"
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
@@ -107,4 +113,53 @@ prod-update: ## Atualiza produção
 	@echo "Atualizando produção..."
 	$(DOCKER_COMPOSE) pull
 	$(MAKE) redeploy
+	$(MAKE) test-all
+
+# Comandos Docker Hub
+docker-login: ## Login no Docker Hub
+	@echo "Fazendo login no Docker Hub..."
+	$(DOCKER) login
+
+docker-build: ## Build da imagem para Docker Hub
+	@echo "Building imagem $(DOCKER_IMAGE):$(DOCKER_TAG)..."
+	$(DOCKER) build -t $(DOCKER_IMAGE):$(DOCKER_TAG) .
+	$(DOCKER) tag $(DOCKER_IMAGE):$(DOCKER_TAG) $(DOCKER_IMAGE):latest
+
+docker-push: ## Push da imagem para Docker Hub
+	@echo "Pushing imagem $(DOCKER_IMAGE):$(DOCKER_TAG) para Docker Hub..."
+	$(DOCKER) push $(DOCKER_IMAGE):$(DOCKER_TAG)
+	$(DOCKER) push $(DOCKER_IMAGE):latest
+
+docker-build-push: docker-build docker-push ## Build e push para Docker Hub
+	@echo "✅ Imagem $(DOCKER_IMAGE):$(DOCKER_TAG) enviada para Docker Hub com sucesso!"
+
+docker-build-versioned: ## Build com versão automática (timestamp)
+	@echo "Building imagem versionada $(DOCKER_IMAGE):$(VERSION)..."
+	$(DOCKER) build -t $(DOCKER_IMAGE):$(VERSION) .
+	$(DOCKER) tag $(DOCKER_IMAGE):$(VERSION) $(DOCKER_IMAGE):latest
+
+docker-push-versioned: ## Push da versão específica para Docker Hub
+	@echo "Pushing imagem versionada $(DOCKER_IMAGE):$(VERSION)..."
+	$(DOCKER) push $(DOCKER_IMAGE):$(VERSION)
+	$(DOCKER) push $(DOCKER_IMAGE):latest
+
+docker-release: docker-build-versioned docker-push-versioned ## Release completo com versão
+	@echo "✅ Release $(VERSION) enviado para Docker Hub!"
+	@echo "📦 Imagem: $(DOCKER_IMAGE):$(VERSION)"
+	@echo "📦 Latest: $(DOCKER_IMAGE):latest"
+
+# Deploy produção com Docker Hub
+prod-deploy-hub: ## Deploy produção usando imagem do Docker Hub
+	@echo "Fazendo deploy de produção usando Docker Hub..."
+	@echo "Imagem: $(DOCKER_IMAGE):$(DOCKER_TAG)"
+	DOCKER_IMAGE=$(DOCKER_IMAGE) DOCKER_TAG=$(DOCKER_TAG) $(DOCKER_COMPOSE) -f docker-compose.prod.yml up -d
+	@echo "Aguardando inicialização..."
+	@sleep 15
+	$(MAKE) test-all
+
+prod-deploy-version: ## Deploy produção com versão específica
+	@echo "Deploy com versão $(VERSION)..."
+	DOCKER_IMAGE=$(DOCKER_IMAGE) DOCKER_TAG=$(VERSION) $(DOCKER_COMPOSE) -f docker-compose.prod.yml up -d
+	@echo "Aguardando inicialização..."
+	@sleep 15
 	$(MAKE) test-all

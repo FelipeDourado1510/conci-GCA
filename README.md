@@ -85,6 +85,8 @@ Verifica conectividade com banco de dados
 
 ### 1. Usando Docker Compose (Recomendado)
 
+#### Desenvolvimento Local
+
 ```bash
 # Clone o repositório
 git clone <seu-repositorio>
@@ -102,6 +104,57 @@ docker-compose logs -f
 
 # Parar a aplicação
 docker-compose down
+```
+
+#### Produção com Portainer
+
+Para deploy em produção usando Portainer:
+
+```bash
+# 1. Configure as variáveis de ambiente no Portainer
+# Vá em Stacks > Add Stack > Environment variables e adicione:
+# DB_SERVER=seu_servidor_db
+# DB_DATABASE=seu_banco
+# DB_USER=seu_usuario_db
+# DB_PASSWORD=sua_senha_db
+# FTP_HOST=seu_servidor_ftp
+# FTP_USER=seu_usuario_ftp
+# FTP_PASS=sua_senha_ftp
+
+# 2. Use o docker-compose.prod.yml como template no Portainer
+# Cole o conteúdo do arquivo docker-compose.prod.yml na seção "Web editor"
+
+# 3. Deploy via Portainer interface
+# A aplicação ficará disponível internamente via nome do container: conciliacao-api-prod
+```
+
+**Importante para Portainer:**
+- ✅ Porta não exposta externamente (comunicação apenas via rede Docker)
+- ✅ Configuração via variáveis de ambiente
+- ✅ Health checks configurados
+- ✅ Volumes persistentes para logs
+- ✅ Restart automático configurado
+- ✅ Limites de recursos definidos
+
+#### Deploy com Docker Hub
+
+Para deploy usando imagem do Docker Hub:
+
+```bash
+# 1. Configure as variáveis de ambiente
+export DOCKER_IMAGE=seu-usuario/conciliacao-api
+export DOCKER_TAG=latest
+
+# 2. Configure as variáveis de ambiente da aplicação
+export DB_SERVER=seu_servidor_db
+export DB_DATABASE=seu_banco
+# ... outras variáveis
+
+# 3. Deploy usando docker-compose.prod.yml
+docker-compose -f docker-compose.prod.yml up -d
+
+# Ou usando Makefile
+make prod-deploy-hub DOCKER_IMAGE=seu-usuario/conciliacao-api DOCKER_TAG=v1.0.0
 ```
 
 ### 2. Usando Docker Build Manual
@@ -123,6 +176,63 @@ docker run -d \
   -e FTP_PASS=sua_senha_ftp \
   conciliacao-api
 ```
+
+## 🚀 Deploy Docker Hub - Método Simples
+
+### Workflow Direto: Build → Push → Deploy
+
+#### 1. Build da Imagem
+
+```bash
+# Substitua 'seu-usuario' pelo seu usuário do Docker Hub
+docker build -t seu-usuario/conciliacao-api:latest .
+
+# Opcional: Versão específica
+docker build -t seu-usuario/conciliacao-api:v1.0.0 .
+```
+
+#### 2. Push para Docker Hub
+
+```bash
+# Push para Docker Hub (você já está logado)
+docker push seu-usuario/conciliacao-api:latest
+
+# Push versão específica (se criou)
+docker push seu-usuario/conciliacao-api:v1.0.0
+```
+
+#### 3. Deploy em Produção
+
+```bash
+# Configure as variáveis de ambiente
+export DOCKER_IMAGE=seu-usuario/conciliacao-api
+export DOCKER_TAG=latest
+
+# Configure variáveis da aplicação
+export DB_SERVER=seu-servidor-db
+export DB_DATABASE=seu-banco
+# ... outras variáveis
+
+# Deploy
+docker-compose -f docker-compose.prod.yml up -d
+```
+
+### 📋 Exemplo Completo
+
+```bash
+# 1. Build
+docker build -t meuusuario/conciliacao-api:latest .
+
+# 2. Push
+docker push meuusuario/conciliacao-api:latest
+
+# 3. Deploy
+export DOCKER_IMAGE=meuusuario/conciliacao-api
+export DOCKER_TAG=latest
+docker-compose -f docker-compose.prod.yml up -d
+```
+
+> 📖 **Guia detalhado:** Veja `DEPLOY-DOCKERHUB.md` para instruções completas
 
 ## 💻 Desenvolvimento Local
 
@@ -177,6 +287,52 @@ Todas as configurações podem ser feitas através de variáveis de ambiente:
 | `FTP_PORT` | Porta FTP | 21 |
 | `FLASK_ENV` | Ambiente Flask | production |
 | `FLASK_DEBUG` | Debug mode | false |
+
+### Configuração para Produção/Portainer
+
+Para deploy em produção, **NUNCA** use credenciais hardcoded. Configure as seguintes variáveis de ambiente:
+
+**Obrigatórias:**
+- `DB_SERVER` - Endereço do servidor SQL Server
+- `DB_DATABASE` - Nome do banco de dados
+- `DB_USER` - Usuário do banco de dados
+- `DB_PASSWORD` - Senha do banco de dados
+- `FTP_HOST` - Servidor FTP
+- `FTP_USER` - Usuário FTP
+- `FTP_PASS` - Senha FTP
+
+**Opcionais (com valores padrão):**
+- `DB_DRIVER` - Driver ODBC (padrão: "ODBC Driver 17 for SQL Server")
+- `FTP_PORT` - Porta FTP (padrão: 21)
+- `FLASK_ENV` - Ambiente Flask (padrão: production)
+- `FLASK_DEBUG` - Debug mode (padrão: false)
+
+### Configuração Docker Hub
+
+Para deploy via Docker Hub, configure também:
+
+**Para Build e Push:**
+- `DOCKER_USER` - Seu usuário no Docker Hub
+- `DOCKER_IMAGE` - Nome completo da imagem (ex: usuario/conciliacao-api)
+- `DOCKER_TAG` - Tag da imagem (ex: latest, v1.0.0)
+
+**Exemplo de arquivo .env para produção:**
+```bash
+# Docker Hub
+DOCKER_IMAGE=meuusuario/conciliacao-api
+DOCKER_TAG=v1.0.0
+
+# Banco de Dados
+DB_SERVER=meu-servidor.database.windows.net
+DB_DATABASE=MeuBanco
+DB_USER=meuusuario
+DB_PASSWORD=minha-senha-segura
+
+# FTP
+FTP_HOST=meu-ftp.com.br
+FTP_USER=meuusuario
+FTP_PASS=minha-senha-ftp
+```
 
 ## 📁 Estrutura do Projeto
 
