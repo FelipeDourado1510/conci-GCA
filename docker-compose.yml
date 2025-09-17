@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  conciliacao-api:
+    build: .
+    container_name: conciliacao-api
+    ports:
+      - "5000:5000"
+    environment:
+      # Configurações do Banco de Dados
+      - DB_SERVER=138.0.160.201
+      - DB_DATABASE=ErCardGCAD1
+      - DB_USER=d1.devee
+      - DB_PASSWORD=6$$ZY325Eo0
+      - DB_DRIVER=ODBC Driver 17 for SQL Server
+      
+      # Configurações FTP
+      - FTP_HOST=ftp.ercard.com.br
+      - FTP_USER=gcactb@ercard.com.br
+      - FTP_PASS=ZC3Vtlzo#A
+      - FTP_PORT=21
+      
+      # Configurações Flask
+      - FLASK_ENV=production
+      - FLASK_DEBUG=false
+    
+    volumes:
+      # Volume para logs locais (opcional)
+      - ./logs:/app/logs
+    
+    restart: unless-stopped
+    
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    
+    networks:
+      - conciliacao-network
+
+networks:
+  conciliacao-network:
+    driver: bridge
+
+volumes:
+  logs:
+    driver: local
+    
