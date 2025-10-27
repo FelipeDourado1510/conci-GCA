@@ -36,11 +36,46 @@ DRIVER = os.getenv('DB_DRIVER', 'ODBC Driver 17 for SQL Server')
 
 # CONEXÃO COM SQL SERVER USANDO SQLALCHEMY
 def conectar_sqlalchemy():
+
+# Túnel SSH
+    SERVER = "138.0.160.201"
+    DATABASE = "ErCardGCAD1"
+    USER = "d1.devee"
+    PASSWORD = "6$ZY325Eo0"
+    DRIVER = "ODBC Driver 17 for SQL Server"
+
+    ssh_tunnel = SSHTunnelForwarder(
+        ('192.168.100.100', 22),      # Servidor SSH
+        ssh_username='gabriel',
+        ssh_password='1234',
+        remote_bind_address=(SERVER, 1433),  # Banco remoto
+        local_bind_address=('127.0.0.1', 0)  # Porta local aleatória
+    )
+
+    ssh_tunnel.start()
+    db_host = "127.0.0.1"
+    db_port = ssh_tunnel.local_bind_port
+
+
     connection_string = (
         f"mssql+pyodbc://{USER}:{PASSWORD}@{SERVER}/{DATABASE}"
         f"?driver={DRIVER.replace(' ', '+')}"
     )
-    return create_engine(connection_string)
+
+    odbc_str = (
+        f"Driver={{ODBC Driver 18 for SQL Server}};"
+        f"Server={db_host},{db_port};"
+        f"Database={DATABASE};"
+        f"UID={USER};"
+        f"PWD={PASSWORD};"
+        f"TrustServerCertificate=yes;"
+        f"Encrypt=no;"
+    )
+    
+    conn_str = "mssql+pyodbc:///?odbc_connect=" + urllib.parse.quote_plus(odbc_str)
+    engine = create_engine(conn_str)
+
+    return engine
 
 # GERA ID DE MOVIMENTO
 def gerar_id_movimento():
@@ -520,3 +555,4 @@ if __name__ == '__main__':
     # Configurações para desenvolvimento
     app.run(host='0.0.0.0', port=5000, debug=True)
     
+
