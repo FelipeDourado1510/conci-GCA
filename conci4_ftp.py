@@ -63,7 +63,7 @@ def conectar_sqlalchemy():
     )
 
     odbc_str = (
-        f"Driver={{ODBC Driver 18 for SQL Server}};"
+        f"Driver={{ODBC Driver 17 for SQL Server}};"
         f"Server={db_host},{db_port};"
         f"Database={DATABASE};"
         f"UID={USER};"
@@ -555,4 +555,5 @@ if __name__ == '__main__':
     # Configurações para desenvolvimento
     app.run(host='0.0.0.0', port=5000, debug=True)
     
+
 
