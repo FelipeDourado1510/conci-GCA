@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   conciliacao-api:
-    image: conci-gca:latest
+    image: sleepykamigami/conci-gca:latest
     environment:
       # Configurações do Banco de Dados - usar variáveis de ambiente
       - DB_SERVER=${DB_SERVER}
