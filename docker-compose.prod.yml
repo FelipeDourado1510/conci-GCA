@@ -1,35 +1,56 @@
+version: '3.8'
+
 services:
   conciliacao-api:
-    image: sleepykamigami/conci-gca:latest
+    image: conciliacao-api:latest
     environment:
       # Configurações do Banco de Dados - usar variáveis de ambiente
       - DB_SERVER=${DB_SERVER}
       - DB_DATABASE=${DB_DATABASE}
       - DB_USER=${DB_USER}
       - DB_PASSWORD=${DB_PASSWORD}
-      - DB_DRIVER=${DB_DRIVER:-ODBC Driver 17 for SQL Server} 
+      - DB_DRIVER=${DB_DRIVER:-ODBC Driver 17 for SQL Server}
+      
       # Configurações FTP - usar variáveis de ambiente
       - FTP_HOST=${FTP_HOST}
       - FTP_USER=${FTP_USER}
       - FTP_PASS=${FTP_PASS}
       - FTP_PORT=${FTP_PORT:-21}
+      
       # Configurações Flask
       - FLASK_ENV=production
       - FLASK_DEBUG=false
+    
     volumes:
       - logs-prod:/app/logs
-
+    
+    restart: unless-stopped
+    
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    
     networks:
       - network_swarm_public
+
     deploy:
-      mode: global
-      placement:
-        constraints:
-          - node.role == manager
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          cpus: '0.5'
+          memory: 256M
+
 networks:
   network_swarm_public:
     external: true
+
+
 volumes:
   logs-prod:
-    external: true
+    driver: local
     name: conciliacao-logs-prod
