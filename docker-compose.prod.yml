@@ -1,8 +1,8 @@
 version: '3.8'
 
 services:
-  conciliacao-api:
-    image: conciliacao-api:latest
+  conciliacao2-api:
+    image: conciliacao2-api:latest
     environment:
       # Configurações do Banco de Dados - usar variáveis de ambiente
       - DB_SERVER=${DB_SERVER}
@@ -53,4 +53,4 @@ networks:
 volumes:
   logs-prod:
     driver: local
-    name: conciliacao-logs-prod
+    name: conciliacao2-logs-prod
