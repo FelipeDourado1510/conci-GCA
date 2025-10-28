@@ -18,7 +18,6 @@ services:
       - FLASK_DEBUG=false
     volumes:
       - logs-prod:/app/logs
-    restart: unless-stopped
 
     networks:
       - network_swarm_public
